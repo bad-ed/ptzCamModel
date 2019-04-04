@@ -1,0 +1,10 @@
+{
+  "name": "camera-model",
+  "version": "0.0.1",
+  "description": "Camera model visualization",
+  "scripts": {
+  },
+  "keywords": [],
+  "author": "Ed Nemeretsky <iddqdr2d2@gmail.com>",
+  "license": "MIT"
+}
