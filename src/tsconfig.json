@@ -1,0 +1,10 @@
+{
+    "include": [
+        "./**/*.ts",
+        "./**/*.tsx"
+    ],
+    "compilerOptions": {
+        "jsx": "react",
+        "target": "es5"
+    }
+}
