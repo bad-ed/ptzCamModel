@@ -33,6 +33,33 @@ const Content: React.SFC<Props> = (props) => <article>
 <BM>{'\\tan{\\alpha} = \\tan{\\upsilon_h\\over 2} \\times {dx \\over width/2}'}</BM>
 <BM>{'\\tan{\\beta} = \\tan{\\upsilon_v\\over 2} \\times {dy \\over height/2}'}</BM>
 
+<p>Рассмотрим "виртуальную" сферу. Пусть центр сферы находится в точке крепления поворотной камеры. Также представим, что изображение с камеры получается путем пересечения лучей, выпущенных из центра сферы под углами <IM>\upsilon_h</IM> и <IM>\upsilon_v</IM>. Для простоты расчетов будем полагать, что радиус сферы равен единице.</p>
+
+<p>Точка <IM>C</IM>, лежащая на поверхности сферы &mdash; центр изображения. Координаты точки <IM>C</IM>:</p>
+
+<BM>{`\\begin{cases}
+    x = \\cos{\\phi}\\sin{\\theta}\\\\
+    y = \\sin{\\phi}\\\\
+    z = \\cos{\\phi}\\cos{\\theta}
+\\end{cases}`}</BM>
+
+<p>Перейдем в систему координат <IM>X', Y', Z'</IM>, в которой точка <IM>C</IM> будет иметь координаты <IM>{`\\{x'=0; y'=0; z'=1\\}`}</IM>. Переход к новой системе координат можно осуществить путем поворота сначала вокруг оси <IM>OX</IM> на угол <IM>\phi</IM>, затем поворота вокруг оси <IM>OY</IM> на угол <IM>\theta</IM>.</p>
+
+<p>Рассмотрим треугольник <IM>OCA</IM>: <IM>\angle OCA = 90^\circ</IM>, <IM>OC=1</IM> (радиус сферы), следовательно <IM>OA=OC / \cos\alpha = 1/\cos\alpha</IM></p>
+
+<p>Рассмотрим треугольник <IM>ODA</IM>: <IM>DA=BC=\tan\beta</IM> (т.к. <IM>ABCD</IM> &mdash; прямоугольник). Отсюда вычисляем: </p>
+<BM>{`\\tan{\\beta'}={DA \\over OA}=\\tan\\beta\\cos\\alpha`}</BM>
+
+<p>Рассчитаем координаты точки <IM>D'</IM>, которая является проекцией точки <IM>D</IM> на сферу. Опустим перпендикуляр из точки <IM>D'</IM> на отрезок <IM>OA</IM>, <IM>E</IM> &mdash; точка пересечения этих отрезков. Треугольник <IM>OED'</IM> помогает найти координату <IM>{`y'=\\sin{\\beta'}`}</IM> и <IM>{`OE=\\cos{\\beta'}`}</IM>. Отрезок <IM>OE</IM> лежит в плоскости <IM>OX'Z'</IM>, следовательно <IM>{`x'=OE\\cdot\\sin\\alpha=\\cos{\\beta'}\\sin\\alpha`}</IM>, <IM>{`z'=OE\\cdot\\sin\\alpha=\\cos{\\beta'}\\cos\\alpha`}</IM>. В итоге получаем:</p>
+
+<BM>{`D'=
+\\begin{cases}
+    x' = \\cos{\\beta'}\\sin{\\alpha}\\\\
+    y' = \\sin{\\beta'}\\\\
+    z' = \\cos{\\beta'}\\cos{\\alpha}
+\\end{cases}`}
+</BM>
+
 </article>;
 
 export const Article: React.SFC<Props> = (props) => (<div className="container-fluid h-100">
