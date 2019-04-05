@@ -23,7 +23,7 @@ function createCamera(width: number, height: number) {
 function createRenderer(width: number, height: number) {
     let renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setClearColor(0xffffff);
-    renderer.setSize(width, height);
+    renderer.setSize(width, height, false);
 
     return renderer;
 }
@@ -31,7 +31,7 @@ function createRenderer(width: number, height: number) {
 export class PanTiltModel extends React.Component<Props> {
     private rootDiv = React.createRef<HTMLDivElement>();
     private scene: Scene = null;
-    private camera: THREE.Camera = null;
+    private camera: THREE.PerspectiveCamera = null;
     private renderer: THREE.Renderer = null;
     private rafId = 0;
 
@@ -74,7 +74,21 @@ export class PanTiltModel extends React.Component<Props> {
 
     private animate() {
         this.rafId = requestAnimationFrame(this.animate);
-        this.renderer.render(this.scene.getScene(), this.camera);
+
+        const renderer = this.renderer;
+        const canvas = renderer.domElement;
+
+        const {clientWidth, clientHeight} = canvas;
+        if (clientWidth !== canvas.width ||
+            clientHeight !== canvas.height)
+        {
+            this.camera.aspect = clientWidth / clientHeight;
+            this.camera.updateProjectionMatrix();
+
+            renderer.setSize(clientWidth, clientHeight, false);
+        }
+
+        renderer.render(this.scene.getScene(), this.camera);
     }
 
     private updateSceneProps(prevProps: Props, newProps: Props) {
