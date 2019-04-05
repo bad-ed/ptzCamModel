@@ -43,7 +43,7 @@ const Content: React.SFC<Props> = (props) => <article>
     z = \\cos{\\phi}\\cos{\\theta}
 \\end{cases}`}</BM>
 
-<p>Перейдем в систему координат <IM>X', Y', Z'</IM>, в которой точка <IM>C</IM> будет иметь координаты <IM>{`\\{x'=0; y'=0; z'=1\\}`}</IM>. Переход к новой системе координат можно осуществить путем поворота сначала вокруг оси <IM>OX</IM> на угол <IM>\phi</IM>, затем поворота вокруг оси <IM>OY</IM> на угол <IM>\theta</IM>.</p>
+<p>Перейдем в систему координат <IM>X', Y', Z'</IM>, в которой точка <IM>C</IM> будет иметь координаты <IM>{`\\{x'=0; y'=0; z'=1\\}`}</IM>.</p>
 
 <p>Рассмотрим треугольник <IM>OCA</IM>: <IM>\angle OCA = 90^\circ</IM>, <IM>OC=1</IM> (радиус сферы), следовательно <IM>OA=OC / \cos\alpha = 1/\cos\alpha</IM></p>
 
@@ -57,6 +57,16 @@ const Content: React.SFC<Props> = (props) => <article>
     x' = \\cos{\\beta'}\\sin{\\alpha}\\\\
     y' = \\sin{\\beta'}\\\\
     z' = \\cos{\\beta'}\\cos{\\alpha}
+\\end{cases}`}
+</BM>
+
+<p>Перейдем обратно в систему координат <IM>XYZ</IM>. Для этого повернем точку <IM>D'</IM> сначала вокруг оси <IM>OX'</IM> на угол <IM>\phi</IM>, затем вокруг оси <IM>OY'</IM> на угол <IM>\theta</IM>. После поворота на <IM>\phi</IM> вокруг оси <IM>OX'</IM> получаем следующие координаты:</p>
+
+<BM>{`D'=
+\\begin{cases}
+    x' = \\cos{\\beta'}\\sin{\\alpha}\\\\
+    y = \\sin{\\beta'}\\cos\\phi\\ + \\cos{\\beta'}\\cos\\alpha\\sin\\phi\\\\
+    z^* = \\cos{\\beta'}\\cos\\alpha\\cos\\phi - \\sin{\\beta'}\\sin\\phi
 \\end{cases}`}
 </BM>
 
