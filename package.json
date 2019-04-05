@@ -9,11 +9,13 @@
   "author": "Ed Nemeretsky <iddqdr2d2@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "@types/katex": "^0.10.1",
     "@types/react": "^16.8.12",
     "@types/react-dom": "^16.8.3",
     "@types/webpack": "^4.4.27",
     "@types/webpack-dev-server": "^3.1.5",
     "html-webpack-plugin": "^3.2.0",
+    "katex": "^0.10.1",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "three": "^0.103.0",

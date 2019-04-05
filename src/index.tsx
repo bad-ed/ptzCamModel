@@ -1,9 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import { PanTiltModel } from './components/PanTiltModel';
+import { Article } from './components/Article';
 
 ReactDOM.render(
-    <PanTiltModel />,
+    <Article />,
 document.getElementById('root'));
 

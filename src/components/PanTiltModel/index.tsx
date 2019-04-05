@@ -6,7 +6,7 @@ import { Scene } from './PanTiltScene';
 const SPHERE_RADIUS = 16;
 
 interface Props {
-
+    style?: React.CSSProperties
 }
 
 function createCamera(width: number, height: number) {
@@ -52,8 +52,7 @@ export class PanTiltModel extends React.Component<Props> {
     }
 
     componentDidMount() {
-        //const viewPort = this.rootDiv.current;
-        const viewPort = document.body;
+        const viewPort = this.rootDiv.current;
 
         this.scene = new Scene(SPHERE_RADIUS);
         this.camera = createCamera(viewPort.clientWidth, viewPort.clientHeight);
@@ -70,7 +69,7 @@ export class PanTiltModel extends React.Component<Props> {
     }
 
     render() {
-        return <div style={{height: '100%'}} ref={this.rootDiv} />
+        return <div style={(this.props.style || {})} ref={this.rootDiv} />
     }
 
     private animate() {
