@@ -4,9 +4,13 @@ import * as THREE from 'three';
 import { Scene } from './PanTiltScene';
 
 const SPHERE_RADIUS = 16;
+const WIDTH = 1920;
+const HEIGHT = 1080;
 
 interface Props {
-    style?: React.CSSProperties
+    style?: React.CSSProperties;
+    pan: number;
+    tilt: number;
 }
 
 function createCamera(width: number, height: number) {
@@ -54,7 +58,7 @@ export class PanTiltModel extends React.Component<Props> {
     componentDidMount() {
         const viewPort = this.rootDiv.current;
 
-        this.scene = new Scene(SPHERE_RADIUS);
+        this.scene = new Scene(SPHERE_RADIUS, WIDTH, HEIGHT, 75, WIDTH, HEIGHT);
         this.camera = createCamera(viewPort.clientWidth, viewPort.clientHeight);
         this.renderer = createRenderer(viewPort.clientWidth, viewPort.clientHeight);
 
@@ -93,5 +97,10 @@ export class PanTiltModel extends React.Component<Props> {
     }
 
     private updateSceneProps(prevProps: Props, newProps: Props) {
+        if (prevProps.pan !== newProps.pan ||
+            prevProps.tilt !== newProps.tilt)
+        {
+            this.scene.updatePanTilt(newProps.pan, newProps.tilt);
+        }
     }
 }

@@ -79,16 +79,103 @@ function createMeridians(radius: number, meridians = 1) {
     return new THREE.Line(geometry, material);
 }
 
+function createPlane(radius: number, dx: number, dy: number) {
+    // Plane
+    const points = [
+        new THREE.Vector3(0, 0, radius), // Center point
+        new THREE.Vector3(dx, 0, radius),
+        new THREE.Vector3(dx, dy, radius),
+        new THREE.Vector3(0, dy, radius)
+    ];
+
+    var material = new THREE.LineBasicMaterial( { color : 0xff0000 } );
+    var geometry = (new THREE.BufferGeometry()).setFromPoints(points);
+
+    const plane = new THREE.LineLoop( geometry, material );
+
+    // Rays from center (internal)
+    const dyAngle = Math.atan2(dy, radius);
+    const dxAngle = Math.atan2(dx, radius);
+    const dxdyAngle = Math.atan2(dy, Math.sqrt(dx * dx + radius * radius));
+
+    const internalRaysPoints = [
+        // Ray from sphere center to the "center point" of plane
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, radius),
+        // Ray from sphere center to the (dx, 0) point (on sphere)
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(radius * Math.sin(dxAngle), 0, radius * Math.cos(dxAngle)),
+        // Ray from sphere center to the (dx, dy) point (on sphere)
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(radius * Math.sin(dxAngle) * Math.cos(dxdyAngle),
+            radius * Math.sin(dxdyAngle),
+            radius * Math.cos(dxAngle) * Math.cos(dxdyAngle)),
+        // Ray from sphere center to the (0, dy) point (on sphere)
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, radius * Math.sin(dyAngle), radius * Math.cos(dyAngle))
+    ];
+
+    const internalRaysMaterial = new THREE.LineDashedMaterial({color: 0x000000, linewidth: 1, scale: 2, dashSize: 1, gapSize: 0.5});
+    geometry = (new THREE.BufferGeometry()).setFromPoints(internalRaysPoints);
+
+    const internalRays = new THREE.LineSegments(geometry, internalRaysMaterial);
+    internalRays.computeLineDistances();
+
+    // Externals rays: from sphere surface to plane
+    const externalRaysPoints = Array.prototype.concat(...(
+        [1,2,3].map(pointIndex => [
+            internalRaysPoints[pointIndex * 2 + 1].clone(),
+            points[pointIndex].clone()
+        ])
+    ));
+
+    geometry = (new THREE.BufferGeometry()).setFromPoints(externalRaysPoints);
+    const externalRays = new THREE.LineSegments(geometry, material);
+
+    ////////////////////////////////////////////////
+
+    let result = new THREE.Group();
+    result.add(plane, internalRays, externalRays);
+
+    return result;
+}
+
 export class Scene {
     private scene: THREE.Scene;
     private radius: number;
 
-    constructor(radius: number) {
+    private pan = 0;
+    private tilt = 0;
+
+    private width: number;
+    private height: number;
+
+    private hFov: number;
+
+    constructor(radius: number, width: number, height: number, hFov: number, x: number, y: number) {
         this.scene = new THREE.Scene();
         this.radius = radius;
 
+        hFov = hFov / 180 * Math.PI;
+
+        this.width = width;
+        this.height = height;
+        this.hFov = hFov;
+
         this.scene.add(createMeridians(radius, 18));
         this.scene.add(createParallels(radius, 6));
+
+        const tanHfovHalf = Math.tan(hFov / 2);
+        const tanAlpha = tanHfovHalf * (2 * x - width) / width;
+        const tanBeta = tanHfovHalf * (2 * y - height) / width;
+
+        const dx = radius * tanAlpha;
+        const dy = radius * tanBeta;
+
+        console.log(dx);
+
+        const plane = createPlane(radius, dx, dy);
+        this.scene.add(plane);
     }
 
     getScene() {
@@ -103,10 +190,14 @@ export class Scene {
         const distanceToScene = cameraPosition.distanceTo(SPHERE_CENTER);
 
         if (this.scene.fog === null) {
-            this.scene.fog = new THREE.Fog(0xf0f0f0, distanceToScene - this.radius, distanceToScene);
+            this.scene.fog = new THREE.Fog(0xf0f0f0, distanceToScene - this.radius, distanceToScene + this.radius);
         } else {
             (this.scene.fog as THREE.Fog).near = distanceToScene - this.radius;
-            (this.scene.fog as THREE.Fog).far = distanceToScene;
+            (this.scene.fog as THREE.Fog).far = distanceToScene + this.radius;
         }
+    }
+
+    updatePanTilt(pan: number, tilt: number) {
+
     }
 }

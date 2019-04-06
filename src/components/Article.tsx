@@ -150,7 +150,7 @@ export const Article: React.SFC<Props> = (props) => (<div className="container-f
         </div>
         <div className="col-6">
             <div style={{height: '100%'}}>
-                <PanTiltModel style={{position: 'sticky', top: 0, height: '100vh'}} />
+                <PanTiltModel pan={30} tilt={-30} style={{position: 'sticky', top: 0, height: '100vh'}} />
             </div>
         </div>
     </div>
