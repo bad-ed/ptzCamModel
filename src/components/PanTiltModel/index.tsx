@@ -11,6 +11,7 @@ interface Props {
     style?: React.CSSProperties;
     pan: number;
     tilt: number;
+    hFov: number;
 }
 
 function createCamera(width: number, height: number) {
@@ -58,7 +59,7 @@ export class PanTiltModel extends React.Component<Props> {
     componentDidMount() {
         const viewPort = this.rootDiv.current;
 
-        this.scene = new Scene(SPHERE_RADIUS, WIDTH, HEIGHT, 75, WIDTH, HEIGHT);
+        this.scene = new Scene(SPHERE_RADIUS, WIDTH, HEIGHT, this.props.hFov, WIDTH, HEIGHT);
         this.camera = createCamera(viewPort.clientWidth, viewPort.clientHeight);
         this.renderer = createRenderer(viewPort.clientWidth, viewPort.clientHeight);
 
