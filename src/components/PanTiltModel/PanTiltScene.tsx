@@ -87,7 +87,7 @@ export class Scene {
         this.scene = new THREE.Scene();
         this.radius = radius;
 
-        this.scene.add(createMeridians(radius, 16));
+        this.scene.add(createMeridians(radius, 18));
         this.scene.add(createParallels(radius, 6));
     }
 
@@ -103,10 +103,10 @@ export class Scene {
         const distanceToScene = cameraPosition.distanceTo(SPHERE_CENTER);
 
         if (this.scene.fog === null) {
-            this.scene.fog = new THREE.Fog(0xeeeeee, distanceToScene, distanceToScene + this.radius);
+            this.scene.fog = new THREE.Fog(0xf0f0f0, distanceToScene - this.radius, distanceToScene);
         } else {
-            (this.scene.fog as THREE.Fog).near = distanceToScene;
-            (this.scene.fog as THREE.Fog).far = distanceToScene + this.radius;
+            (this.scene.fog as THREE.Fog).near = distanceToScene - this.radius;
+            (this.scene.fog as THREE.Fog).far = distanceToScene;
         }
     }
 }
