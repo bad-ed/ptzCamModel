@@ -88,6 +88,7 @@ export class PanTiltModel extends React.Component<Props> {
             renderer.setSize(clientWidth, clientHeight, false);
         }
 
+        this.scene.onBeforeRender(this.camera.position);
         renderer.render(this.scene.getScene(), this.camera);
     }
 
