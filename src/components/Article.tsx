@@ -65,10 +65,46 @@ const Content: React.SFC<Props> = (props) => <article>
 <BM>{`D'=
 \\begin{cases}
     x' = \\cos{\\beta'}\\sin{\\alpha}\\\\
-    y = \\sin{\\beta'}\\cos\\phi\\ + \\cos{\\beta'}\\cos\\alpha\\sin\\phi\\\\
+    y = \\sin{\\beta'}\\cos\\phi + \\cos{\\beta'}\\cos\\alpha\\sin\\phi\\\\
     z^* = \\cos{\\beta'}\\cos\\alpha\\cos\\phi - \\sin{\\beta'}\\sin\\phi
 \\end{cases}`}
 </BM>
+
+<p>Рассмотрим поворот вокруг оси <IM>OY</IM>:</p>
+<BM>
+    x = x'\cos\theta + z^*\sin\theta\\
+    z = z^*\cos\theta - x\sin\theta
+</BM>
+
+<p>Точка <IM>D'</IM> лежит на поверхности сферы, следовательно :</p>
+<BM>{`D'=\\begin{cases}
+    x' = \\cos{\\phi^*}\\sin{\\theta'}\\\\
+    y = \\sin{\\phi^*}\\\\
+    z^* = \\cos{\\phi^*}\\cos{\\theta'}
+\\end{cases}`}</BM>
+
+<p>Подставляя <IM>x'</IM> и <IM>z^*</IM> в уравнения выше, получаем:</p>
+<BM>
+    x = \cos\phi^*(\sin\theta'\cos\theta+\cos\theta'\sin\theta) = \cos\phi^*\sin(\theta+\theta')\\
+    z = \cos\phi^*(\cos\theta'\cos\theta-\sin\theta'\sin\theta) = \cos\phi^*\cos(\theta+\theta')
+</BM>
+
+<p>Упрощая координату <IM>y</IM>, получаем:</p>
+<BM>{"y = {\\sin\\beta'\\over\\sin\\beta}\\sin(\\beta+\\phi)"}</BM>
+
+<div style={{display: 'none'}}>
+    <BM>{`
+        y = \\sin\\beta'\\cos\\phi + \\cos\\beta'\\cos\\alpha\\sin\\phi = \\\\
+            \\cos\\beta'\\big(\\tan\\beta'\\cos\\phi + \\cos\\alpha\\sin\\phi\\big) =
+            \\cos\\beta'\\cos\\alpha\\big(\\tan\\beta\\cos\\phi + \\sin\\phi\\big) = \\\\
+            {\\cos\\beta'\\cos\\alpha\\over\\cos\\beta}\\big(\\sin\\beta\\cos\\phi+\\cos\\beta\\sin\\phi\\big)=
+            {\\sin\\beta'\\cos\\alpha\\over\\tan\\beta\\cos\\alpha\\cos\\beta}\\sin(\\beta+\\phi)=\\\\
+            {\\sin\\beta'\\over\\sin\\beta}\\sin(\\beta+\\phi)
+    `}</BM>
+</div>
+
+<p>С другой стороны <IM>y = \sin\phi^*</IM>, откуда получаем:</p>
+<BM>{"\\phi^* = \\arcsin\\left({\\sin\\beta'\\over\\sin\\beta}\\sin(\\beta+\\phi)\\right)"}</BM>
 
 </article>;
 
