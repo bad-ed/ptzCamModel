@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Inline as IM, Block as BM } from './Math';
 import { PanTiltModel } from '../containers/PanTiltModel';
+import { ModelControls } from '../components/PanTiltModel/ModelControls';
 
 interface Props {
 
@@ -150,7 +151,10 @@ export const Article: React.SFC<Props> = (props) => (<div className="container-f
         </div>
         <div className="col-6">
             <div style={{height: '100%'}}>
-                <PanTiltModel style={{position: 'sticky', top: 0, height: '100vh'}} />
+                <div className="d-flex flex-column" style={{position: 'sticky', top: 0, minHeight: '100vh', maxHeight: '100vh'}}>
+                    <PanTiltModel className='d-flex flex-grow-1' />
+                    <ModelControls hFov={75} changeHFov={() => {}} />
+                </div>
             </div>
         </div>
     </div>

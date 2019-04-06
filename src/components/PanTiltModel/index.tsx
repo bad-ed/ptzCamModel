@@ -9,6 +9,7 @@ const HEIGHT = 1080;
 
 interface Props {
     style?: React.CSSProperties;
+    className?: string;
     pan: number;
     tilt: number;
     hFov: number;
@@ -63,7 +64,11 @@ export class PanTiltModel extends React.Component<Props> {
         this.camera = createCamera(viewPort.clientWidth, viewPort.clientHeight);
         this.renderer = createRenderer(viewPort.clientWidth, viewPort.clientHeight);
 
-        viewPort.appendChild(this.renderer.domElement);
+        const canvas = this.renderer.domElement;
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+
+        viewPort.appendChild(canvas);
         this.animate();
     }
 
@@ -74,7 +79,7 @@ export class PanTiltModel extends React.Component<Props> {
     }
 
     render() {
-        return <div style={(this.props.style || {})} ref={this.rootDiv} />
+        return <div style={{...(this.props.style || {}), position: 'relative'}} className={this.props.className || ''} ref={this.rootDiv} />
     }
 
     private animate() {
@@ -83,7 +88,7 @@ export class PanTiltModel extends React.Component<Props> {
         const renderer = this.renderer;
         const canvas = renderer.domElement;
 
-        const {clientWidth, clientHeight} = canvas;
+        const {clientWidth, clientHeight} = this.rootDiv.current;
         if (clientWidth !== canvas.width ||
             clientHeight !== canvas.height)
         {
