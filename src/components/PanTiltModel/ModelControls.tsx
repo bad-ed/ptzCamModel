@@ -8,12 +8,16 @@ interface Props {
     height: number;
     x: number;
     y: number;
+    pan: number;
+    tilt: number;
 
     changeHFov(hFov: number): void;
     changeWidth(width: number): void;
     changeHeight(height: number): void;
     changeX(x: number): void;
     changeY(y: number): void;
+    changePan(pan: number): void;
+    changeTilt(tilt: number): void;
 }
 
 interface ControlProps {
@@ -31,7 +35,7 @@ class Control extends React.PureComponent<ControlProps> {
     constructor(props : ControlProps) {
         super(props);
 
-        this.id = `${genUuid}`;
+        this.id = `${genUuid()}`;
         this.onChange = this.onChange.bind(this);
     }
 
@@ -60,11 +64,23 @@ export class ModelControls extends React.PureComponent<Props> {
     changeY(value: number) { return this.props.changeY(Math.min(value, this.props.height)); }
 
     render() {
-        const {hFov, width, height, x, y} = this.props;
+        const {hFov, width, height, x, y, pan, tilt} = this.props;
 
         return <form className="pb-3">
-            <Control min={1} max={90} step={0.1} onChange={this.props.changeHFov}
-                value={hFov}>Horizontal FOV {hFov}°</Control>
+            <div className="row">
+                <div className="col">
+                    <Control min={1} max={90} step={0.1} onChange={this.props.changeHFov}
+                        value={hFov}>Horizontal FOV {hFov}°</Control>
+                </div>
+                <div className="col">
+                    <Control min={0} max={360} step={0.1} onChange={this.props.changePan}
+                        value={pan}>Pan {pan}°</Control>
+                </div>
+                <div className="col">
+                    <Control min={-90} max={90} step={0.1} onChange={this.props.changeTilt}
+                        value={tilt}>Tilt {tilt}°</Control>
+                </div>
+            </div>
             <div className="row">
                 <div className="col">
                     <Control min={1} max={2048} step={1} onChange={this.props.changeWidth}

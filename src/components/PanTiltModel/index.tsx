@@ -63,7 +63,7 @@ export class PanTiltModel extends React.Component<Props> {
         const viewPort = this.rootDiv.current;
 
         this.scene = new Scene(SPHERE_RADIUS, this.props.width, this.props.height,
-            this.props.hFov, this.props.x, this.props.y);
+            this.props.hFov, this.props.pan, this.props.tilt, this.props.x, this.props.y);
         this.camera = createCamera(viewPort.clientWidth, viewPort.clientHeight);
         this.renderer = createRenderer(viewPort.clientWidth, viewPort.clientHeight);
 

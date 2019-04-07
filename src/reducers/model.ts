@@ -15,8 +15,8 @@ interface State {
 }
 
 const defaultState: State = {
-    pan: 0,
-    tilt: 0,
+    pan: 33.5,
+    tilt: 44,
     hFov: 75,
     width: 1920,
     height: 1080,
@@ -29,7 +29,9 @@ type ModelActions =
     | ActionType<typeof Actions.changeWidth>
     | ActionType<typeof Actions.changeHeight>
     | ActionType<typeof Actions.changeX>
-    | ActionType<typeof Actions.changeY>;
+    | ActionType<typeof Actions.changeY>
+    | ActionType<typeof Actions.changePan>
+    | ActionType<typeof Actions.changeTilt>;
 
 const reducer: Redux.Reducer<Readonly<State>, ModelActions> = (state = defaultState, action) => {
     switch (action.type) {
@@ -43,6 +45,10 @@ const reducer: Redux.Reducer<Readonly<State>, ModelActions> = (state = defaultSt
         return {...state, x: action.payload};
     case Action.MODEL_Y_SET:
         return {...state, y: action.payload};
+    case Action.MODEL_PAN_SET:
+        return {...state, pan: action.payload};
+    case Action.MODEL_TILT_SET:
+        return {...state, tilt: action.payload};
     }
 
     return state;

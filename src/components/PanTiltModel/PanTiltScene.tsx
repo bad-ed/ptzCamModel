@@ -185,8 +185,8 @@ export class Scene {
     private scene: THREE.Scene;
     private radius: number;
 
-    private pan = 0;
-    private tilt = 0;
+    private pan: number;
+    private tilt: number;
 
     private width: number;
     private height: number;
@@ -198,13 +198,15 @@ export class Scene {
 
     private plane: THREE.Object3D = null;
 
-    constructor(radius: number, width: number, height: number, hFov: number, x: number, y: number) {
+    constructor(radius: number, width: number, height: number, hFov: number, pan: number, tilt: number, x: number, y: number) {
         this.scene = new THREE.Scene();
         this.radius = radius;
 
         this.width = width;
         this.height = height;
         this.hFov = hFov / 180 * Math.PI;
+        this.pan = pan / 180 * Math.PI;
+        this.tilt = tilt / 180 * Math.PI;
         this.x = x;
         this.y = y;
 
@@ -212,6 +214,9 @@ export class Scene {
         this.scene.add(createParallels(radius, 6));
 
         this.plane = this.createPlane();
+        this.plane.rotateOnWorldAxis(new THREE.Vector3(1,0,0), this.tilt);
+        this.plane.rotateOnWorldAxis(new THREE.Vector3(0,1,0), this.pan);
+
         this.scene.add(this.plane);
     }
 
@@ -236,8 +241,11 @@ export class Scene {
 
     updateSceneProps(hFov: number, width: number, height: number, x: number, y: number, pan: number, tilt: number) {
         hFov = hFov / 180 * Math.PI;
+        pan = pan / 180 * Math.PI;
+        tilt = tilt / 180 * Math.PI;
 
         let recreatePlane = false;
+        let rotatePlane = false;
 
         if (this.hFov !== hFov ||
             this.width !== width ||
@@ -252,6 +260,14 @@ export class Scene {
             this.y = y;
 
             recreatePlane = true;
+            rotatePlane = true;
+        }
+
+        if (this.pan !== pan || this.tilt !== tilt) {
+            this.pan = pan;
+            this.tilt = tilt;
+
+            rotatePlane = true;
         }
 
         if (recreatePlane === true) {
@@ -262,6 +278,15 @@ export class Scene {
 
             this.plane = this.createPlane();
             this.scene.add(this.plane);
+        }
+
+        if (rotatePlane === true) {
+            this.plane.rotation.x = 0;
+            this.plane.rotation.y = 0;
+            this.plane.rotation.z = 0;
+
+            this.plane.rotateOnWorldAxis(new THREE.Vector3(1,0,0), tilt);
+            this.plane.rotateOnWorldAxis(new THREE.Vector3(0,1,0), pan);
         }
     }
 
