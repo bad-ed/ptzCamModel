@@ -1,10 +1,12 @@
 import * as THREE from 'three';
+import { Vector3, Matrix4 } from 'three';
 
 // This json generated here http://gero3.github.io/facetype.js/
 // Restricted character set: OABCDαβφ'
 const fontData = require('../../../assets/Latin Modern Math_Regular.json');
 
 const BG_MERIDIANS_COLOR = 0xdddddd;
+const ANGLES_COLOR = 0x000000;
 const SPHERE_CENTER = new THREE.Vector3(0,0,0);
 
 function createParallel(radius: number, theta: number) {
@@ -83,6 +85,44 @@ function createMeridians(radius: number, meridians = 1) {
     return new THREE.Line(geometry, material);
 }
 
+function translateToPlane(v0: THREE.Vector3, v1: THREE.Vector3) {
+    // Assume that v0 is new x axis
+    let newX = v0.clone().normalize();
+    // Cross product of v0 and v1 gives new Z axis
+    let newZ = v0.clone().cross(v1).normalize();
+    // Cross product of newZ and newX gives newY
+    let newY = newZ.clone().cross(newX).normalize();
+
+    return new THREE.Matrix4().makeBasis(newX, newY, newZ);
+}
+
+function ellipticCurveBetweenVectors(radius: number, divisions: number, v0: THREE.Vector3, v1: THREE.Vector3) {
+    let mat = translateToPlane(v0, v1);
+
+    const angle = v0.angleTo(v1);
+
+    let curve = new THREE.EllipseCurve(
+        0,  0,            // ax, aY
+        radius, radius,   // xRadius, yRadius
+        0, angle,  // aStartAngle, aEndAngle
+        false,            // aClockwise
+        0             // aRotation
+    );
+
+    return curve.getPoints(divisions)
+        .map(point => new THREE.Vector3(point.x, point.y, 0).applyMatrix4(mat));
+}
+
+function createAngleBetweenVectors(radius: number, v0: THREE.Vector3, v1: THREE.Vector3) {
+    const points = ellipticCurveBetweenVectors(radius, 20, v0, v1);
+
+    let material = new THREE.LineBasicMaterial({ color : ANGLES_COLOR });
+    let geometry = (new THREE.BufferGeometry()).setFromPoints(points);
+
+    // Create the final object to add to the scene
+    return new THREE.Line(geometry, material);
+}
+
 function createPlane(radius: number, dx: number, dy: number) {
     // Plane
     const points = [
@@ -144,8 +184,16 @@ function createPlane(radius: number, dx: number, dy: number) {
 
     interface PointInfo {
         text: string;
-        position: THREE.Vector3
+        position: THREE.Vector3;
+        plane?: THREE.Matrix4;
     };
+
+    const chord = (v0: THREE.Vector3, v1: THREE.Vector3, radius: number) => {
+        const angle = v0.angleTo(v1);
+        return radius * Math.sin(angle) / Math.cos(angle / 2);
+    }
+
+    const letterSize = 1;
 
     const letters: PointInfo[] = [
         { text: 'O', position: SPHERE_CENTER },
@@ -153,7 +201,13 @@ function createPlane(radius: number, dx: number, dy: number) {
         { text: 'A', position: points[1] },
         { text: 'D', position: points[2] },
         { text: 'B', position: points[3] },
-        { text: 'D\'', position: internalRaysPoints[2*2 + 1] }
+        { text: 'D\'', position: internalRaysPoints[2*2 + 1] },
+        { text: 'α', position: new Vector3(radius / 4, -letterSize*2/5, 0),
+            plane: translateToPlane(points[0].clone().add(points[1]), points[1]) },
+        { text: 'β', position: new Vector3(radius / 4, -letterSize*2/5, 0),
+            plane: translateToPlane(points[0].clone().add(points[3]), points[3]) },
+        { text: 'β\'', position: new Vector3(radius / 4, -letterSize*2/5, 0),
+            plane: translateToPlane(points[1].clone().add(points[2]), points[2]) }
     ];
 
     let letterGroup = new THREE.Group();
@@ -166,6 +220,11 @@ function createPlane(radius: number, dx: number, dy: number) {
         });
 
         const label = new THREE.Mesh(geometry, labelsMaterial);
+        if (letter.plane) {
+            letter.position.applyMatrix4(letter.plane);
+            label.applyMatrix(letter.plane);
+        }
+
         label.position.x = letter.position.x;
         label.position.y = letter.position.y;
         label.position.z = letter.position.z;
@@ -175,8 +234,15 @@ function createPlane(radius: number, dx: number, dy: number) {
 
     ////////////////////////////////////////////////
 
+    const alphaAngle = createAngleBetweenVectors(radius / 3, points[0], points[1]);
+    const betaAngle = createAngleBetweenVectors(radius / 3, points[0], points[3]);
+    const betaDerAngle = createAngleBetweenVectors(radius / 3, points[1], points[2]);
+
+    ////////////////////////////////////////////////
+
     let result = new THREE.Group();
-    result.add(plane, internalRays, externalRays, letterGroup);
+    result.add(plane, internalRays, externalRays, letterGroup,
+        alphaAngle, betaAngle, betaDerAngle);
 
     return result;
 }
