@@ -150,32 +150,28 @@ export class Scene {
     private width: number;
     private height: number;
 
+    private x: number;
+    private y: number;
+
     private hFov: number;
+
+    private plane: THREE.Object3D = null;
 
     constructor(radius: number, width: number, height: number, hFov: number, x: number, y: number) {
         this.scene = new THREE.Scene();
         this.radius = radius;
 
-        hFov = hFov / 180 * Math.PI;
-
         this.width = width;
         this.height = height;
-        this.hFov = hFov;
+        this.hFov = hFov / 180 * Math.PI;
+        this.x = x;
+        this.y = y;
 
         this.scene.add(createMeridians(radius, 18));
         this.scene.add(createParallels(radius, 6));
 
-        const tanHfovHalf = Math.tan(hFov / 2);
-        const tanAlpha = tanHfovHalf * (2 * x - width) / width;
-        const tanBeta = tanHfovHalf * (2 * y - height) / width;
-
-        const dx = radius * tanAlpha;
-        const dy = radius * tanBeta;
-
-        console.log(dx);
-
-        const plane = createPlane(radius, dx, dy);
-        this.scene.add(plane);
+        this.plane = this.createPlane();
+        this.scene.add(this.plane);
     }
 
     getScene() {
@@ -199,5 +195,28 @@ export class Scene {
 
     updatePanTilt(pan: number, tilt: number) {
 
+    }
+
+    updateHFov(hFov: number) {
+        this.hFov = hFov / 180 * Math.PI;
+
+        if (this.plane !== null) {
+            this.scene.remove(this.plane);
+            this.plane = null;
+        }
+
+        this.plane = this.createPlane();
+        this.scene.add(this.plane);
+    }
+
+    private createPlane() {
+        const tanHfovHalf = Math.tan(this.hFov / 2);
+        const tanAlpha = tanHfovHalf * (2 * this.x - this.width) / this.width;
+        const tanBeta = tanHfovHalf * (2 * this.y - this.height) / this.width;
+
+        const dx = this.radius * tanAlpha;
+        const dy = this.radius * tanBeta;
+
+        return createPlane(this.radius, dx, dy);
     }
 }

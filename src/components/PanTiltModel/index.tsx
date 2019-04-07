@@ -108,5 +108,9 @@ export class PanTiltModel extends React.Component<Props> {
         {
             this.scene.updatePanTilt(newProps.pan, newProps.tilt);
         }
+
+        if (prevProps.hFov !== newProps.hFov) {
+            this.scene.updateHFov(newProps.hFov);
+        }
     }
 }
