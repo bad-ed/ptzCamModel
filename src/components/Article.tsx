@@ -92,7 +92,7 @@ const Content: React.SFC<Props> = (props) => <article>
 <p>Рассмотрим поворот вокруг оси <IM>OY</IM>:</p>
 <BM>{String.raw`\begin{aligned}
     x &= x'\cos\theta + z^*\sin\theta\\
-    z &= z^*\cos\theta - x\sin\theta
+    z &= z^*\cos\theta - x'\sin\theta
 \end{aligned}`}</BM>
 
 <p>Точка <IM>D'</IM> лежит на поверхности сферы, следовательно :</p>

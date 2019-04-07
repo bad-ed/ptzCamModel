@@ -180,7 +180,7 @@ function createPlane(radius: number, dx: number, dy: number) {
 
     const font = new THREE.Font(fontData);
 
-    const labelsMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
+    const labelsMaterial = new THREE.MeshBasicMaterial({color: 0x000000, fog: false});
 
     interface PointInfo {
         text: string;
