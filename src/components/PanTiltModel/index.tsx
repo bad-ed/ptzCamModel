@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as THREE from 'three';
+import OrbitControls = require('three-orbitcontrols');
 
 import { Scene } from './PanTiltScene';
 
@@ -41,6 +42,7 @@ export class PanTiltModel extends React.Component<Props> {
     private scene: Scene = null;
     private camera: THREE.PerspectiveCamera = null;
     private renderer: THREE.Renderer = null;
+    private controls = null;
     private rafId = 0;
 
     constructor(props: Props) {
@@ -71,6 +73,8 @@ export class PanTiltModel extends React.Component<Props> {
         canvas.style.width = '100%';
         canvas.style.height = '100%';
 
+        this.controls = new OrbitControls(this.camera, canvas);
+
         viewPort.appendChild(canvas);
         this.animate();
     }
@@ -87,6 +91,8 @@ export class PanTiltModel extends React.Component<Props> {
 
     private animate() {
         this.rafId = requestAnimationFrame(this.animate);
+
+        this.controls.update();
 
         const renderer = this.renderer;
         const canvas = renderer.domElement;
