@@ -4,8 +4,6 @@ import * as THREE from 'three';
 import { Scene } from './PanTiltScene';
 
 const SPHERE_RADIUS = 16;
-const WIDTH = 1920;
-const HEIGHT = 1080;
 
 interface Props {
     style?: React.CSSProperties;
@@ -13,6 +11,10 @@ interface Props {
     pan: number;
     tilt: number;
     hFov: number;
+    width: number;
+    height: number;
+    x: number;
+    y: number;
 }
 
 function createCamera(width: number, height: number) {
@@ -60,7 +62,8 @@ export class PanTiltModel extends React.Component<Props> {
     componentDidMount() {
         const viewPort = this.rootDiv.current;
 
-        this.scene = new Scene(SPHERE_RADIUS, WIDTH, HEIGHT, this.props.hFov, WIDTH, HEIGHT);
+        this.scene = new Scene(SPHERE_RADIUS, this.props.width, this.props.height,
+            this.props.hFov, this.props.x, this.props.y);
         this.camera = createCamera(viewPort.clientWidth, viewPort.clientHeight);
         this.renderer = createRenderer(viewPort.clientWidth, viewPort.clientHeight);
 
@@ -103,14 +106,11 @@ export class PanTiltModel extends React.Component<Props> {
     }
 
     private updateSceneProps(prevProps: Props, newProps: Props) {
-        if (prevProps.pan !== newProps.pan ||
-            prevProps.tilt !== newProps.tilt)
-        {
-            this.scene.updatePanTilt(newProps.pan, newProps.tilt);
-        }
-
-        if (prevProps.hFov !== newProps.hFov) {
-            this.scene.updateHFov(newProps.hFov);
-        }
+        this.scene.updateSceneProps(
+            newProps.hFov,
+            newProps.width, newProps.height,
+            newProps.x, newProps.y,
+            newProps.pan, newProps.tilt
+        );
     }
 }

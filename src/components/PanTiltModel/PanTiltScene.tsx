@@ -193,20 +193,35 @@ export class Scene {
         }
     }
 
-    updatePanTilt(pan: number, tilt: number) {
+    updateSceneProps(hFov: number, width: number, height: number, x: number, y: number, pan: number, tilt: number) {
+        hFov = hFov / 180 * Math.PI;
 
-    }
+        let recreatePlane = false;
 
-    updateHFov(hFov: number) {
-        this.hFov = hFov / 180 * Math.PI;
+        if (this.hFov !== hFov ||
+            this.width !== width ||
+            this.height !== height ||
+            this.x !== x ||
+            this.y !== y)
+        {
+            this.hFov = hFov;
+            this.width = width;
+            this.height = height;
+            this.x = x;
+            this.y = y;
 
-        if (this.plane !== null) {
-            this.scene.remove(this.plane);
-            this.plane = null;
+            recreatePlane = true;
         }
 
-        this.plane = this.createPlane();
-        this.scene.add(this.plane);
+        if (recreatePlane === true) {
+            if (this.plane !== null) {
+                this.scene.remove(this.plane);
+                this.plane = null;
+            }
+
+            this.plane = this.createPlane();
+            this.scene.add(this.plane);
+        }
     }
 
     private createPlane() {
