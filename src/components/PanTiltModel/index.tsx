@@ -20,9 +20,9 @@ interface Props {
 function createCamera(width: number, height: number) {
     let camera = new THREE.PerspectiveCamera(50, width / height);
 
-    camera.position.x = 40;
+    camera.position.x = 30;
     camera.position.y = -10;
-    camera.position.z = 40;
+    camera.position.z = 30;
     camera.lookAt(0,0,0);
 
     return camera;

@@ -1,5 +1,9 @@
 import * as THREE from 'three';
 
+// This json generated here http://gero3.github.io/facetype.js/
+// Restricted character set: OABCDαβφ'
+const fontData = require('../../../assets/Latin Modern Math_Regular.json');
+
 const BG_MERIDIANS_COLOR = 0xdddddd;
 const SPHERE_CENTER = new THREE.Vector3(0,0,0);
 
@@ -134,8 +138,45 @@ function createPlane(radius: number, dx: number, dy: number) {
 
     ////////////////////////////////////////////////
 
+    const font = new THREE.Font(fontData);
+
+    const labelsMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
+
+    interface PointInfo {
+        text: string;
+        position: THREE.Vector3
+    };
+
+    const letters: PointInfo[] = [
+        { text: 'O', position: SPHERE_CENTER },
+        { text: 'C', position: points[0] },
+        { text: 'A', position: points[1] },
+        { text: 'D', position: points[2] },
+        { text: 'B', position: points[3] },
+        { text: 'D\'', position: internalRaysPoints[2*2 + 1] }
+    ];
+
+    let letterGroup = new THREE.Group();
+
+    for (let letter of letters) {
+        geometry = new THREE.TextBufferGeometry(letter.text, {
+            font: font,
+            size: 1,
+            height: 0
+        });
+
+        const label = new THREE.Mesh(geometry, labelsMaterial);
+        label.position.x = letter.position.x;
+        label.position.y = letter.position.y;
+        label.position.z = letter.position.z;
+
+        letterGroup.add(label);
+    }
+
+    ////////////////////////////////////////////////
+
     let result = new THREE.Group();
-    result.add(plane, internalRays, externalRays);
+    result.add(plane, internalRays, externalRays, letterGroup);
 
     return result;
 }
