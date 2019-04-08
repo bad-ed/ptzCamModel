@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Vector3, Matrix4 } from 'three';
+import { Vector3, Matrix4, Float32BufferAttribute } from 'three';
 
 // This json generated here http://gero3.github.io/facetype.js/
 // Restricted character set: OABCDαβφ'
@@ -9,10 +9,65 @@ const BG_MERIDIANS_COLOR = 0xdddddd;
 const ANGLES_COLOR = 0x000000;
 const SPHERE_CENTER = new THREE.Vector3(0,0,0);
 
+const enum PointIndex {
+    O = 0,
+    C = 1,
+    A = 2,
+    D = 3,
+    B = 4,
+    AS = 5, // A on Sphere,
+    DS = 6, // D on Sphere (D')
+    BS = 7, // B on Sphere
+}
+
+function createPointCoords(radius: number, dx: number, dy: number) {
+    const dyAngle = Math.atan2(dy, radius);
+    const dxAngle = Math.atan2(dx, radius);
+    const dxdyAngle = Math.atan2(dy, Math.sqrt(dx * dx + radius * radius));
+
+    return [
+        // x, y, z
+        0, 0, 0,
+        0, 0, radius,   // C
+        dx, 0, radius,  // A
+        dx, dy, radius, // D
+        0, dy, radius,  // B
+
+        // A projection on sphere
+        radius * Math.sin(dxAngle), 0, radius * Math.cos(dxAngle),
+
+        // D projection on sphere (D')
+        radius * Math.sin(dxAngle) * Math.cos(dxdyAngle),
+        radius * Math.sin(dxdyAngle), radius * Math.cos(dxAngle) * Math.cos(dxdyAngle),
+
+        // B projection on sphere
+        0, radius * Math.sin(dyAngle), radius * Math.cos(dyAngle)
+    ];
+}
+
+const pointIndices = [
+    // Red rectangle plane
+    PointIndex.C, PointIndex.A,
+    PointIndex.A, PointIndex.D,
+    PointIndex.D, PointIndex.B,
+    PointIndex.B, PointIndex.C,
+
+    // External rays, from plane to sphere
+    PointIndex.A, PointIndex.AS,
+    PointIndex.B, PointIndex.BS,
+    PointIndex.D, PointIndex.DS,
+
+    // Internal rays from sphere center to sphere surface
+    PointIndex.C, PointIndex.O,
+    PointIndex.AS, PointIndex.O,
+    PointIndex.DS, PointIndex.O,
+    PointIndex.BS, PointIndex.O,
+];
+
 function createParallel(radius: number, theta: number) {
     const circleRadius = radius * Math.cos(theta);
 
-    var curve = new THREE.EllipseCurve(
+    const curve = new THREE.EllipseCurve(
         0, 0,            // ax, aY
         circleRadius, circleRadius,   // xRadius, yRadius
         0, Math.PI * 2,  // aStartAngle, aEndAngle
@@ -20,16 +75,13 @@ function createParallel(radius: number, theta: number) {
         0                // aRotation
     );
 
-    var z = radius * Math.sin(theta);
-    var points = curve.getPoints(60).map(v2 => new THREE.Vector3(v2.x, z, v2.y));
-
-    return (new THREE.BufferGeometry()).setFromPoints( points );
+    const z = radius * Math.sin(theta);
+    return curve.getPoints(60).map(v2 => new THREE.Vector3(v2.x, z, v2.y));
 }
 
 function createParallels(radius: number, additionalParallels = 0) {
-    var material = new THREE.LineBasicMaterial( { color : BG_MERIDIANS_COLOR } );
-
-    let result = [];
+    let result: THREE.Vector3[][] = [];
+    result.push(createParallel(radius, 0));
 
     for (let i = 0; i < additionalParallels; ++i) {
         const theta = Math.asin((radius * (i + 1)) / (radius * (additionalParallels + 1)));
@@ -38,14 +90,7 @@ function createParallels(radius: number, additionalParallels = 0) {
         result.push(createParallel(radius, -theta));
     }
 
-    let group = new THREE.Group();
-    group.add(...(result.map(geometry => new THREE.Line(geometry, material))));
-
-    material = new THREE.LineBasicMaterial( { color : 0x999999 } );
-    group.add(new THREE.Line(createParallel(radius, 0), material));
-
-    // Create the final object to add to the scene
-    return group;
+    return result;
 }
 
 function createMeridians(radius: number, meridians = 1) {
@@ -62,7 +107,7 @@ function createMeridians(radius: number, meridians = 1) {
     // Array of Vector2 of points
     let points = curve.getPoints(60).map(v2 => new THREE.Vector3(v2.x, v2.y, 0));
 
-    let finalPoints = [];
+    let finalPoints: THREE.Vector3[] = [];
     finalPoints.push(...points);
 
     // Remove first point, it is redundant since it equals to last point
@@ -78,11 +123,49 @@ function createMeridians(radius: number, meridians = 1) {
         }
     }
 
-    let material = new THREE.LineBasicMaterial({ color : BG_MERIDIANS_COLOR });
-    let geometry = (new THREE.BufferGeometry()).setFromPoints(finalPoints);
+    return finalPoints;
+}
+
+function createSphereGrid(radius: number, meridians = 1, additionalParallels = 0) {
+    interface Group {
+        startVertex: number;
+        count: number;
+    }
+
+    let allPoints = createMeridians(radius, meridians);
+    const parallelsPoints = createParallels(radius, additionalParallels);
+
+    let groups: Group[] = [];
+
+    groups.push({startVertex: 0, count: allPoints.length});
+    let lastVertex = allPoints.length;
+
+    for (let i = 0, len = parallelsPoints.length; i < len; ++i) {
+        const count = parallelsPoints[i].length;
+        allPoints = allPoints.concat(parallelsPoints[i]);
+
+        groups.push({startVertex: lastVertex, count});
+        lastVertex += count;
+    }
+
+    const materials = [
+        new THREE.LineBasicMaterial({ color : BG_MERIDIANS_COLOR }),
+        new THREE.LineBasicMaterial({ color : 0x999999 })
+    ];
+    const geometry = (new THREE.BufferGeometry()).setFromPoints(allPoints);
+
+    // Meridians
+    geometry.addGroup(groups[0].startVertex, groups[0].count, 0);
+    // Parallel 0
+    geometry.addGroup(groups[1].startVertex, groups[1].count, 1);
+
+    // Other parallels
+    for (let i = 0, len = groups.length; i < len; ++i) {
+        geometry.addGroup(groups[i].startVertex, groups[i].count, 0);
+    }
 
     // Create the final object to add to the scene
-    return new THREE.Line(geometry, material);
+    return new THREE.Line(geometry, materials);
 }
 
 function translateToPlane(v0: THREE.Vector3, v1: THREE.Vector3) {
@@ -113,138 +196,123 @@ function ellipticCurveBetweenVectors(radius: number, divisions: number, v0: THRE
         .map(point => new THREE.Vector3(point.x, point.y, 0).applyMatrix4(mat));
 }
 
-function createAngleBetweenVectors(radius: number, v0: THREE.Vector3, v1: THREE.Vector3) {
-    const points = ellipticCurveBetweenVectors(radius, 20, v0, v1);
-
-    let material = new THREE.LineBasicMaterial({ color : ANGLES_COLOR });
-    let geometry = (new THREE.BufferGeometry()).setFromPoints(points);
-
-    // Create the final object to add to the scene
-    return new THREE.Line(geometry, material);
+interface Labels {
+    labels: {
+        [label: string]: {
+            mesh: THREE.Mesh;
+        }
+    }
 }
 
-function createPlane(radius: number, dx: number, dy: number) {
-    // Plane
-    const points = [
-        new THREE.Vector3(0, 0, radius), // Center point
-        new THREE.Vector3(dx, 0, radius),
-        new THREE.Vector3(dx, dy, radius),
-        new THREE.Vector3(0, dy, radius)
-    ];
+function createLabels() {
+    let result: Labels = {
+        labels: {}
+    };
 
-    var material = new THREE.LineBasicMaterial( { color : 0xff0000 } );
-    var geometry = (new THREE.BufferGeometry()).setFromPoints(points);
-
-    const plane = new THREE.LineLoop( geometry, material );
-
-    // Rays from center (internal)
-    const dyAngle = Math.atan2(dy, radius);
-    const dxAngle = Math.atan2(dx, radius);
-    const dxdyAngle = Math.atan2(dy, Math.sqrt(dx * dx + radius * radius));
-
-    const internalRaysPoints = [
-        // Ray from sphere center to the "center point" of plane
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 0, radius),
-        // Ray from sphere center to the (dx, 0) point (on sphere)
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(radius * Math.sin(dxAngle), 0, radius * Math.cos(dxAngle)),
-        // Ray from sphere center to the (dx, dy) point (on sphere)
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(radius * Math.sin(dxAngle) * Math.cos(dxdyAngle),
-            radius * Math.sin(dxdyAngle),
-            radius * Math.cos(dxAngle) * Math.cos(dxdyAngle)),
-        // Ray from sphere center to the (0, dy) point (on sphere)
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, radius * Math.sin(dyAngle), radius * Math.cos(dyAngle))
-    ];
-
-    const internalRaysMaterial = new THREE.LineDashedMaterial({color: 0x000000, linewidth: 1, scale: 2, dashSize: 1, gapSize: 0.5});
-    geometry = (new THREE.BufferGeometry()).setFromPoints(internalRaysPoints);
-
-    const internalRays = new THREE.LineSegments(geometry, internalRaysMaterial);
-    internalRays.computeLineDistances();
-
-    // Externals rays: from sphere surface to plane
-    const externalRaysPoints = Array.prototype.concat(...(
-        [1,2,3].map(pointIndex => [
-            internalRaysPoints[pointIndex * 2 + 1].clone(),
-            points[pointIndex].clone()
-        ])
-    ));
-
-    geometry = (new THREE.BufferGeometry()).setFromPoints(externalRaysPoints);
-    const externalRays = new THREE.LineSegments(geometry, material);
-
-    ////////////////////////////////////////////////
+    const letters = ['O', 'C', 'A', 'D', 'B', 'D\'', 'α', 'β', 'β\''];
 
     const font = new THREE.Font(fontData);
+    const material = new THREE.MeshBasicMaterial({color: 0x000000, fog: false});
 
-    const labelsMaterial = new THREE.MeshBasicMaterial({color: 0x000000, fog: false});
+    for (let letter of letters) {
+        const geometry = new THREE.TextBufferGeometry(letter, {
+            font: font,
+            size: 1,
+            height: 0
+        });
 
+        result.labels[letter] = {
+            mesh: new THREE.Mesh(geometry, material)
+        };
+    }
+
+    return result;
+}
+
+// Create labels meshes
+function adjustLabels(labels: Labels, pointPositions: Float32BufferAttribute, radius: number) {
     interface PointInfo {
         text: string;
         position: THREE.Vector3;
         plane?: THREE.Matrix4;
     };
 
-    const chord = (v0: THREE.Vector3, v1: THREE.Vector3, radius: number) => {
-        const angle = v0.angleTo(v1);
-        return radius * Math.sin(angle) / Math.cos(angle / 2);
-    }
+    const getPointPos = (index: number) =>
+        new THREE.Vector3().fromBufferAttribute(pointPositions, index);
 
     const letterSize = 1;
 
+    const bissecPlane = (v0: THREE.Vector3, v1: THREE.Vector3) => translateToPlane(v0.add(v1), v1);
+
     const letters: PointInfo[] = [
-        { text: 'O', position: SPHERE_CENTER },
-        { text: 'C', position: points[0] },
-        { text: 'A', position: points[1] },
-        { text: 'D', position: points[2] },
-        { text: 'B', position: points[3] },
-        { text: 'D\'', position: internalRaysPoints[2*2 + 1] },
+        { text: 'O', position: getPointPos(PointIndex.O) },
+        { text: 'C', position: getPointPos(PointIndex.C) },
+        { text: 'A', position: getPointPos(PointIndex.A) },
+        { text: 'D', position: getPointPos(PointIndex.D) },
+        { text: 'B', position: getPointPos(PointIndex.B) },
+        { text: 'D\'', position: getPointPos(PointIndex.DS) },
         { text: 'α', position: new Vector3(radius / 4, -letterSize*2/5, 0),
-            plane: translateToPlane(points[0].clone().add(points[1]), points[1]) },
+            plane: bissecPlane(getPointPos(PointIndex.C), getPointPos(PointIndex.A)) },
         { text: 'β', position: new Vector3(radius / 4, -letterSize*2/5, 0),
-            plane: translateToPlane(points[0].clone().add(points[3]), points[3]) },
+            plane: bissecPlane(getPointPos(PointIndex.C), getPointPos(PointIndex.B)) },
         { text: 'β\'', position: new Vector3(radius / 4, -letterSize*2/5, 0),
-            plane: translateToPlane(points[1].clone().add(points[2]), points[2]) }
+            plane: bissecPlane(getPointPos(PointIndex.A), getPointPos(PointIndex.D)) }
     ];
 
-    let letterGroup = new THREE.Group();
-
     for (let letter of letters) {
-        geometry = new THREE.TextBufferGeometry(letter.text, {
-            font: font,
-            size: 1,
-            height: 0
-        });
+        const mesh = labels.labels[letter.text].mesh;
 
-        const label = new THREE.Mesh(geometry, labelsMaterial);
         if (letter.plane) {
+            mesh.matrix.identity();
+
             letter.position.applyMatrix4(letter.plane);
-            label.applyMatrix(letter.plane);
+            mesh.applyMatrix(letter.plane);
         }
 
-        label.position.x = letter.position.x;
-        label.position.y = letter.position.y;
-        label.position.z = letter.position.z;
-
-        letterGroup.add(label);
+        mesh.position.copy(letter.position);
     }
+}
 
-    ////////////////////////////////////////////////
+function createPlane(radius: number, pointPositions: THREE.Float32BufferAttribute) {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setIndex(pointIndices);
+    geometry.addAttribute('position', pointPositions);
 
-    const alphaAngle = createAngleBetweenVectors(radius / 3, points[0], points[1]);
-    const betaAngle = createAngleBetweenVectors(radius / 3, points[0], points[3]);
-    const betaDerAngle = createAngleBetweenVectors(radius / 3, points[1], points[2]);
+    let lineDistances = new Float32Array(pointPositions.count);
+    for (let i = 0; i < pointPositions.count; ++i) lineDistances[i] = i == 0 ? 0 : radius;
 
-    ////////////////////////////////////////////////
+    geometry.addAttribute('lineDistance', new THREE.BufferAttribute(lineDistances, 1));
 
-    let result = new THREE.Group();
-    result.add(plane, internalRays, externalRays, letterGroup,
-        alphaAngle, betaAngle, betaDerAngle);
+    geometry.addGroup(0, 7 * 2, 0);
+    geometry.addGroup(7 * 2, 4 * 2, 1);
 
-    return result;
+    const materials = [
+        new THREE.LineBasicMaterial({color : 0xff0000}),
+        new THREE.LineDashedMaterial({color: 0x000000,
+            linewidth: 1, scale: 2, dashSize: 1, gapSize: 0.5})
+    ];
+
+    return new THREE.LineSegments(geometry, materials);
+}
+
+function createAngleArcs(radius: number, pointPositions: THREE.Float32BufferAttribute) {
+    const getPointPos = (index: number) =>
+        new THREE.Vector3().fromBufferAttribute(pointPositions, index);
+
+    const betaAngle = ellipticCurveBetweenVectors(radius / 3, 20,
+        getPointPos(PointIndex.B), getPointPos(PointIndex.C));
+    const alphaAngle = ellipticCurveBetweenVectors(radius / 3, 20,
+        getPointPos(PointIndex.C), getPointPos(PointIndex.A));
+    const betasAngle = ellipticCurveBetweenVectors(radius / 3, 20,
+        getPointPos(PointIndex.A), getPointPos(PointIndex.D));
+
+    const points = betaAngle.concat(alphaAngle).concat(betasAngle);
+
+    let material = new THREE.LineBasicMaterial({ color : ANGLES_COLOR });
+    let geometry = (new THREE.BufferGeometry()).setFromPoints(points);
+
+    // Create the final object to add to the scene
+    return new THREE.Line(geometry, material);
 }
 
 export class Scene {
@@ -262,7 +330,10 @@ export class Scene {
 
     private hFov: number;
 
-    private plane: THREE.Object3D = null;
+    private pointPositions: THREE.Float32BufferAttribute;
+    private labels: Labels;
+    private plane: THREE.Object3D;
+    private angles: THREE.Object3D;
 
     constructor(radius: number, width: number, height: number, hFov: number, pan: number, tilt: number, x: number, y: number) {
         this.scene = new THREE.Scene();
@@ -276,10 +347,22 @@ export class Scene {
         this.x = x;
         this.y = y;
 
-        this.scene.add(createMeridians(radius, 18));
-        this.scene.add(createParallels(radius, 6));
+        const {dx, dy} = this.calcDxDy();
+        this.pointPositions = new THREE.Float32BufferAttribute(createPointCoords(this.radius, dx, dy), 3);
 
+        this.scene.add(createSphereGrid(radius, 18, 6));
         this.plane = this.createPlane();
+
+        this.labels = createLabels();
+        adjustLabels(this.labels, this.pointPositions, this.radius);
+
+        Object.keys(this.labels.labels).forEach(label => {
+            this.plane.add(this.labels.labels[label].mesh);
+        });
+
+        this.angles = createAngleArcs(this.radius, this.pointPositions);
+        this.plane.add(this.angles);
+
         this.plane.rotateOnWorldAxis(new THREE.Vector3(1,0,0), this.tilt);
         this.plane.rotateOnWorldAxis(new THREE.Vector3(0,1,0), this.pan);
 
@@ -337,13 +420,18 @@ export class Scene {
         }
 
         if (recreatePlane === true) {
-            if (this.plane !== null) {
-                this.scene.remove(this.plane);
-                this.plane = null;
-            }
+            const {dx, dy} = this.calcDxDy();
+            const pointCoords = createPointCoords(this.radius, dx, dy);
 
-            this.plane = this.createPlane();
-            this.scene.add(this.plane);
+            this.pointPositions.copyArray(pointCoords);
+            this.pointPositions.needsUpdate = true;
+
+            adjustLabels(this.labels, this.pointPositions, this.radius);
+
+            this.plane.remove(this.angles);
+
+            this.angles = createAngleArcs(this.radius, this.pointPositions);
+            this.plane.add(this.angles);
         }
 
         if (rotatePlane === true) {
@@ -356,7 +444,7 @@ export class Scene {
         }
     }
 
-    private createPlane() {
+    private calcDxDy() {
         const tanHfovHalf = Math.tan(this.hFov / 2);
         const tanAlpha = tanHfovHalf * (2 * this.x - this.width) / this.width;
         const tanBeta = tanHfovHalf * (2 * this.y - this.height) / this.width;
@@ -364,6 +452,10 @@ export class Scene {
         const dx = this.radius * tanAlpha;
         const dy = this.radius * tanBeta;
 
-        return createPlane(this.radius, dx, dy);
+        return {dx, dy};
+    }
+
+    private createPlane() {
+        return createPlane(this.radius, this.pointPositions);
     }
 }
