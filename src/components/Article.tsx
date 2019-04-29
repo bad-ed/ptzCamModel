@@ -25,7 +25,7 @@ const Content: React.SFC<Props> = (props) => <article>
     \tan{\alpha} &= \tan{\gamma_h\over 2} \times {x - width/2 \over width/2}\\
     \tan{\beta} &= \tan{\gamma_h\over 2} \times {y - height/2 \over width/2}\\
     \tan{\beta'} &= \tan{\beta}\cos\alpha\\
-    \phi^* &= \arcsin\left({\sin\beta'\over\sin\beta}\sin(\beta+\phi)\right)\\
+    \phi^* &= \arcsin\left(\cos\alpha\cos\beta'\cos\phi\cdot(\tan\beta+\tan\phi)\right)\\
     \theta^* &= \theta + \arctan\left({\tan\alpha \over \cos\phi-\tan\beta\sin\phi}\right)
 \end{aligned}`}</BM>
 
@@ -116,7 +116,7 @@ D'=\begin{cases}\begin{alignedat}{2}
 \end{alignedat}`}</BM>
 
 <p>Упрощая координату <IM>y</IM>, получаем:</p>
-<BM>{"y = {\\sin\\beta'\\over\\sin\\beta}\\sin(\\beta+\\phi)"}</BM>
+<BM>{"y = \\cos\\alpha\\cos\\beta'\\cos\\phi(\\tan\\beta+\\tan\\phi)"}</BM>
 
 <div style={{display: 'none'}}>
     <BM>{`
@@ -131,7 +131,7 @@ D'=\begin{cases}\begin{alignedat}{2}
 
 <p>С другой стороны <IM>y = \sin\phi^*</IM>, откуда получаем:</p>
 <BM>{String.raw`
-    \phi^* = \arcsin\left({\sin\beta'\over\sin\beta}\sin(\beta+\phi)\right)
+    \phi^* = \arcsin\left(\cos\alpha\cos\beta'\cos\phi(\tan\beta+\tan\phi)\right)
 `}</BM>
 
 <p>Найдем <IM>\theta'</IM> из следующего соотношения:</p>
@@ -151,7 +151,7 @@ export const Article: React.SFC<Props> = (props) => (<div className="container-f
         </div>
         <div className="col-6">
             <div style={{height: '100%'}}>
-                <div className="d-flex flex-column" style={{position: 'sticky', top: 0, minHeight: '100vh', maxHeight: '100vh'}}>
+                <div className="d-flex flex-column position-sticky" style={{top: 0, minHeight: '100vh', maxHeight: '100vh'}}>
                     <PanTiltModel className='d-flex flex-grow-1' />
                     <ModelControls />
                 </div>
