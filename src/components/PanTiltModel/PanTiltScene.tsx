@@ -447,7 +447,7 @@ export class Scene {
     private calcDxDy() {
         const tanHfovHalf = Math.tan(this.hFov / 2);
         const tanAlpha = tanHfovHalf * (2 * this.x - this.width) / this.width;
-        const tanBeta = tanHfovHalf * (2 * this.y - this.height) / this.width;
+        const tanBeta = tanHfovHalf * (this.height - 2 * this.y) / this.width;
 
         const dx = this.radius * tanAlpha;
         const dy = this.radius * tanBeta;
