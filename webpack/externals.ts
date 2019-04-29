@@ -3,32 +3,35 @@ const packageJson = require('../package-lock.json');
 const externals = {
     'react': 'React',
     'react-dom': 'ReactDOM',
-    'react-bootstrap-typeahead': 'ReactBootstrapTypeahead',
-    'axios': 'axios',
     'redux': 'Redux',
     'react-redux': 'ReactRedux',
-    'redux-thunk': 'ReduxThunk',
-    'react-router-dom': 'ReactRouterDOM',
-    'papaparse': 'Papa'
+    'three': 'THREE',
+    'katex': 'katex',
 };
 
 const externalsPaths = {
     'react': 'umd/react.production.min.js',
     'react-dom': 'umd/react-dom.production.min.js',
-/*    'react-bootstrap-typeahead': 'react-bootstrap-typeahead.min.js',
-    'axios': 'axios.min.js',
     'redux': 'redux.min.js',
     'react-redux': 'react-redux.min.js',
-    'redux-thunk': 'redux-thunk.min.js',
-    'react-router-dom': 'react-router-dom.min.js',
-    'papaparse': 'papaparse.min.js'*/
+    'three': 'three.min.js',
+    'katex': 'katex.min.js'
 };
 
 const alternativeLibNameInCDN = {
-    'papaparse': 'PapaParse'
+    'three': 'three.js',
+    'katex': 'KaTeX',
 };
 
 export type KnownExternals = (keyof typeof externalsPaths) & (keyof typeof externals);
+
+const processVersion = (libName: KnownExternals, version: string) => {
+    if (libName === 'three') {
+        return version.split('.')[1];
+    }
+
+    return version;
+}
 
 export const peekExternalsLinks = (externalNames: KnownExternals[]) => {
     return externalNames.map(pkgName => {
@@ -42,7 +45,7 @@ export const peekExternalsLinks = (externalNames: KnownExternals[]) => {
             throw new Error(`Url for for package ${pkgName} is unknown`);
         }
 
-        const usedVersion = packageJson.dependencies[pkgName].version;
+        const usedVersion = processVersion(pkgName, packageJson.dependencies[pkgName].version);
         const cdnPkgName = alternativeLibNameInCDN[pkgName] || pkgName;
 
         return `https://cdnjs.cloudflare.com/ajax/libs/${cdnPkgName}/${usedVersion}/${externalsPaths[pkgName]}`;

@@ -5,10 +5,10 @@ import { makeBase } from './webpack.config.base';
 import { KnownExternals, peekExternalsLinks, peekExternals } from './externals';
 
 const usedExternals: KnownExternals[] = [
-    'react', 'react-dom'
+    'react', 'react-dom', 'redux', 'react-redux', 'three', 'katex'
 ];
 
-export const externals = peekExternals([]);
+export const externals = peekExternals(usedExternals);
 const baseConfig = makeBase(path.resolve(__dirname, '../dist'));
 
 const webpackConfig : webpack.Configuration = {

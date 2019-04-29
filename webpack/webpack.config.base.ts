@@ -1,6 +1,6 @@
 import * as webpack from 'webpack';
 
-export const makeBase = (outPath: string, publicPath = '/', dev = false): webpack.Configuration => ({
+export const makeBase = (outPath: string, publicPath = '', dev = false): webpack.Configuration => ({
     output: {
         filename: '[name]-[chunkhash].js',
         path: outPath,

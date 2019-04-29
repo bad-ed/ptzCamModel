@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "description": "Camera model visualization",
   "scripts": {
-    "client-dev": "webpack-dev-server -d --inline --progress --config webpack/webpack.client.dev-server.ts"
+    "client-dev": "webpack-dev-server -d --inline --progress --config webpack/webpack.client.dev-server.ts",
+    "build": "webpack --progress --mode production --config webpack/webpack.client.prod.ts"
   },
   "keywords": [],
   "author": "Ed Nemeretsky <iddqdr2d2@gmail.com>",
